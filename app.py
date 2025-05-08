@@ -93,25 +93,50 @@ if st.session_state.raw_text:
 
     if st.button("Generate Summary and Insights") or st.session_state.summary:
         # Only run analysis if not already in session state
-        if not st.session_state.summary:
+        if not st.session_state.summary or not st.session_state.entities:
             with st.spinner("Analyzing..."):
                 try:
+                    # Generate summary
                     with st.spinner("Generating summary..."):
                         st.session_state.summary = summarize_text(st.session_state.raw_text)
+                    
+                    # If summary was successful, continue with entity extraction and sentiment
+                    try:
+                        analysis_result = analyze_text(st.session_state.raw_text)
+                        st.session_state.entities = analysis_result["entities"]
+                        st.session_state.sentiment = analysis_result["sentiment"]
+                    except Exception as e:
+                        st.error(f"Error analyzing entities and sentiment: {str(e)}")
+                        # Initialize with empty values to prevent errors
+                        st.session_state.entities = {}
+                        st.session_state.sentiment = {"textblob": {"polarity": 0, "subjectivity": 0}, 
+                                                    "vader": {"neg": 0, "neu": 1, "pos": 0, "compound": 0}}
+                    
+                    # Generate insights based on summary
+                    if isinstance(st.session_state.summary, str) and len(st.session_state.summary) > 10:
+                        try:
+                            st.session_state.insights = generate_insights(st.session_state.summary)
+                        except Exception as e:
+                            st.error(f"Error generating insights: {str(e)}")
+                            st.session_state.insights = {"follow_up_questions": ["What are the key points?"], "topics": []}
+                    else:
+                        st.session_state.insights = {"follow_up_questions": ["What are the key points?"], "topics": []}
+                        
                 except Exception as e:
-                    st.error(f"Error generating summary: {str(e)}")
+                    st.error(f"Error during analysis: {str(e)}")
                     st.session_state.summary = "Error generating summary. Please check your API key and try again."
-                analysis_result = analyze_text(st.session_state.raw_text)
-                st.session_state.entities = analysis_result["entities"]
-                st.session_state.sentiment = analysis_result["sentiment"]
-                st.session_state.insights = generate_insights(st.session_state.summary)
+                    st.session_state.entities = {}
+                    st.session_state.sentiment = {"textblob": {"polarity": 0, "subjectivity": 0}, 
+                                                "vader": {"neg": 0, "neu": 1, "pos": 0, "compound": 0}}
+                    st.session_state.insights = {"follow_up_questions": ["What are the key points?"], "topics": []}
 
         # Now display all results using session state variables
         st.subheader("📝 Summary")
         st.write(st.session_state.summary)
 
-        st.subheader("🔎 Named Entities")
-        if st.session_state.entities and len(st.session_state.entities) > 0:
+        # Only show entities if we have them
+        if st.session_state.entities and isinstance(st.session_state.entities, dict):
+            st.subheader("🔎 Named Entities")
             # Group entities by type
             entity_types = {}
             for entity_type, entities_list in st.session_state.entities.items():
