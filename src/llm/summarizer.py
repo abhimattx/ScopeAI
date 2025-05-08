@@ -32,13 +32,21 @@ class TextSummarizer:
         if not api_key:
             api_key = os.getenv("OPENAI_API_KEY")
             
-        if not api_key:
-            raise ValueError("OpenAI API key not found. Please set it in .env or pass directly.")
+        # Try Streamlit secrets as a last resort
+        if not api_key and hasattr(st, 'secrets') and "OPENAI_API_KEY" in st.secrets:
+            api_key = st.secrets["OPENAI_API_KEY"]
             
-        self.client = OpenAI(api_key=api_key)
-        self.model = model
-        self.max_tokens = max_tokens
-        self.max_summary_tokens = max_summary_tokens
+        if not api_key:
+            raise ValueError("OpenAI API key not found. Please set it in .env, Streamlit secrets, or pass directly.")
+            
+        try:
+            self.client = OpenAI(api_key=api_key)
+            self.model = model
+            self.max_tokens = max_tokens
+            self.max_summary_tokens = max_summary_tokens
+        except Exception as e:
+            logger.error(f"Error initializing OpenAI client: {e}")
+            raise ValueError(f"Could not initialize OpenAI client: {str(e)}")
     
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
     def _call_openai_api(self, messages):

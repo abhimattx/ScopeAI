@@ -95,7 +95,12 @@ if st.session_state.raw_text:
         # Only run analysis if not already in session state
         if not st.session_state.summary:
             with st.spinner("Analyzing..."):
-                st.session_state.summary = summarize_text(st.session_state.raw_text)
+                try:
+                    with st.spinner("Generating summary..."):
+                        st.session_state.summary = summarize_text(st.session_state.raw_text)
+                except Exception as e:
+                    st.error(f"Error generating summary: {str(e)}")
+                    st.session_state.summary = "Error generating summary. Please check your API key and try again."
                 analysis_result = analyze_text(st.session_state.raw_text)
                 st.session_state.entities = analysis_result["entities"]
                 st.session_state.sentiment = analysis_result["sentiment"]
