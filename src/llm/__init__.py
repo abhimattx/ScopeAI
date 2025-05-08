@@ -1,7 +1,7 @@
 import os
 import streamlit as st  # Only if used in Streamlit context
 from openai import OpenAI  # Ensure you have the OpenAI library installed
-from src.llm.ner_sentiment import analyze_text
+
 
 
 ...

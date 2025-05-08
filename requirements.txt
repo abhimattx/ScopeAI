@@ -7,7 +7,6 @@ tenacity>=8.0.0
 # Text processing
 spacy>=3.5.0
 textblob>=0.15.3
-vaderSentiment>=3.3.2
 tiktoken>=0.5.0
 
 # PDF parsing
