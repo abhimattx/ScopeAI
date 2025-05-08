@@ -1,4 +1,5 @@
-import spacy
+#import spacy
+import re
 from textblob import TextBlob
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
@@ -9,7 +10,7 @@ Uses spaCy for NER and TextBlob/VADER for sentiment scoring.
 
 
 # Load spaCy model
-nlp = spacy.load("en_core_web_sm")
+nlp = re.load("en_core_web_sm")
 
 def extract_entities(text):
     """
