@@ -1,7 +1,4 @@
-#uncomment the below piece of code to run on the local machine
-
 import spacy
-
 from textblob import TextBlob
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
@@ -89,39 +86,3 @@ if __name__ == "__main__":
     sample_text = "Apple is planning to open a new store in New York City next month. The CEO Tim Cook is very excited about this expansion."
     analysis = analyze_text(sample_text)
     print(analysis)
-
-
-
-'''import re
-from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-
-sentiment_analyzer = SentimentIntensityAnalyzer()
-
-def analyze_text(text):
-    """
-    Streamlit-safe NER + Sentiment using VADER + Regex only.
-    Returns:
-        dict: {
-            "entities": List of capitalized phrases (as pseudo-NER),
-            "sentiment": Sentiment classification
-        }
-    """
-    # Pseudo-NER using capitalized phrase regex
-    entities = re.findall(r'\b([A-Z][a-z]+(?:\s[A-Z][a-z]+)*)\b', text)
-    unique_entities = sorted(set(entities))
-
-    # Sentiment analysis with VADER
-    sentiment_scores = sentiment_analyzer.polarity_scores(text)
-    compound = sentiment_scores["compound"]
-
-    if compound >= 0.05:
-        sentiment = "Positive"
-    elif compound <= -0.05:
-        sentiment = "Negative"
-    else:
-        sentiment = "Neutral"
-
-    return {
-        "entities": unique_entities,
-        "sentiment": sentiment
-    }'''

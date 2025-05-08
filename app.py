@@ -9,20 +9,10 @@ from src.llm.ner_sentiment import analyze_text
 from src.llm.insight_gen import generate_insights
 from src.llm.answer_followup import answer_followup_question
 
-
-st.set_page_config(page_title="ScopeAI – Multi-Source Insight Generator", layout="wide")
-
 # Load environment variables from .env file
 load_dotenv()
 
-def load_css():
-    with open("assets/css/style.css") as f:
-        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
-
-
-load_css()
-
-
+st.set_page_config(page_title="ScopeAI – Multi-Source Insight Generator", layout="wide")
 st.title("🌌 ScopeAI – Understand Anything in Seconds")
 
 # Initialize session state to store results
@@ -93,50 +83,20 @@ if st.session_state.raw_text:
 
     if st.button("Generate Summary and Insights") or st.session_state.summary:
         # Only run analysis if not already in session state
-        if not st.session_state.summary or not st.session_state.entities:
+        if not st.session_state.summary:
             with st.spinner("Analyzing..."):
-                try:
-                    # Generate summary
-                    with st.spinner("Generating summary..."):
-                        st.session_state.summary = summarize_text(st.session_state.raw_text)
-                    
-                    # If summary was successful, continue with entity extraction and sentiment
-                    try:
-                        analysis_result = analyze_text(st.session_state.raw_text)
-                        st.session_state.entities = analysis_result["entities"]
-                        st.session_state.sentiment = analysis_result["sentiment"]
-                    except Exception as e:
-                        st.error(f"Error analyzing entities and sentiment: {str(e)}")
-                        # Initialize with empty values to prevent errors
-                        st.session_state.entities = {}
-                        st.session_state.sentiment = {"textblob": {"polarity": 0, "subjectivity": 0}, 
-                                                    "vader": {"neg": 0, "neu": 1, "pos": 0, "compound": 0}}
-                    
-                    # Generate insights based on summary
-                    if isinstance(st.session_state.summary, str) and len(st.session_state.summary) > 10:
-                        try:
-                            st.session_state.insights = generate_insights(st.session_state.summary)
-                        except Exception as e:
-                            st.error(f"Error generating insights: {str(e)}")
-                            st.session_state.insights = {"follow_up_questions": ["What are the key points?"], "topics": []}
-                    else:
-                        st.session_state.insights = {"follow_up_questions": ["What are the key points?"], "topics": []}
-                        
-                except Exception as e:
-                    st.error(f"Error during analysis: {str(e)}")
-                    st.session_state.summary = "Error generating summary. Please check your API key and try again."
-                    st.session_state.entities = {}
-                    st.session_state.sentiment = {"textblob": {"polarity": 0, "subjectivity": 0}, 
-                                                "vader": {"neg": 0, "neu": 1, "pos": 0, "compound": 0}}
-                    st.session_state.insights = {"follow_up_questions": ["What are the key points?"], "topics": []}
+                st.session_state.summary = summarize_text(st.session_state.raw_text)
+                analysis_result = analyze_text(st.session_state.raw_text)
+                st.session_state.entities = analysis_result["entities"]
+                st.session_state.sentiment = analysis_result["sentiment"]
+                st.session_state.insights = generate_insights(st.session_state.summary)
 
         # Now display all results using session state variables
         st.subheader("📝 Summary")
         st.write(st.session_state.summary)
 
-        # Only show entities if we have them
-        if st.session_state.entities and isinstance(st.session_state.entities, dict):
-            st.subheader("🔎 Named Entities")
+        st.subheader("🔎 Named Entities")
+        if st.session_state.entities and len(st.session_state.entities) > 0:
             # Group entities by type
             entity_types = {}
             for entity_type, entities_list in st.session_state.entities.items():
@@ -169,72 +129,45 @@ if st.session_state.raw_text:
 
         st.subheader("😊 Sentiment")
 
-        try:
-            # Create columns for the two sentiment analyzers
-            col1, col2 = st.columns(2)
+        # Create columns for the two sentiment analyzers
+        col1, col2 = st.columns(2)
 
-            # Check if we have the expected nested structure
-            has_textblob = ("textblob" in st.session_state.sentiment and 
-                           isinstance(st.session_state.sentiment["textblob"], dict) and
-                           "polarity" in st.session_state.sentiment["textblob"])
+        with col1:
+            st.write("**TextBlob Analysis:**")
+            tb_polarity = st.session_state.sentiment["textblob"]["polarity"]
+            tb_subjectivity = st.session_state.sentiment["textblob"]["subjectivity"]
             
-            has_vader = ("vader" in st.session_state.sentiment and 
-                        isinstance(st.session_state.sentiment["vader"], dict) and
-                        "compound" in st.session_state.sentiment["vader"])
+            # Display polarity with color and emotion
+            polarity_color = "green" if tb_polarity > 0 else "red" if tb_polarity < 0 else "gray"
+            polarity_emotion = "Positive 😊" if tb_polarity > 0.3 else "Negative ☹️" if tb_polarity < -0.3 else "Neutral 😐"
+            
+            st.markdown(f"Polarity: <span style='color:{polarity_color}'>{tb_polarity:.2f}</span> ({polarity_emotion})", unsafe_allow_html=True)
+            st.progress(tb_subjectivity)
+            st.write(f"Subjectivity: {tb_subjectivity:.2f} (Objective ↔️ Subjective)")
 
-            # Display TextBlob sentiment if available
-            with col1:
-                st.write("**TextBlob Analysis:**")
-                if has_textblob:
-                    tb_polarity = st.session_state.sentiment["textblob"]["polarity"]
-                    tb_subjectivity = st.session_state.sentiment["textblob"]["subjectivity"]
-                    
-                    # Display polarity with color and emotion
-                    polarity_color = "green" if tb_polarity > 0 else "red" if tb_polarity < 0 else "gray"
-                    polarity_emotion = "Positive 😊" if tb_polarity > 0.3 else "Negative ☹️" if tb_polarity < -0.3 else "Neutral 😐"
-                    
-                    st.markdown(f"Polarity: <span style='color:{polarity_color}'>{tb_polarity:.2f}</span> ({polarity_emotion})", unsafe_allow_html=True)
-                    st.progress(tb_subjectivity)
-                    st.write(f"Subjectivity: {tb_subjectivity:.2f} (Objective ↔️ Subjective)")
-                else:
-                    st.write("Sentiment analysis not available")
-
-            # Display VADER sentiment if available
-            with col2:
-                st.write("**VADER Analysis:**")
-                if has_vader:
-                    vader = st.session_state.sentiment["vader"]
-                    compound = vader["compound"]
-                    
-                    # Display sentiment distribution
-                    st.write("Sentiment Distribution:")
-                    
-                    # Create a horizontal stacked bar
-                    sentiment_data = {
-                        "Positive": vader["pos"] * 100,
-                        "Neutral": vader["neu"] * 100,
-                        "Negative": vader["neg"] * 100
-                    }
-                    
-                    # Display compound score with emotion
-                    compound_color = "green" if compound > 0.05 else "red" if compound < -0.05 else "gray"
-                    compound_emotion = "Positive 😊" if compound > 0.05 else "Negative ☹️" if compound < -0.05 else "Neutral 😐"
-                    
-                    st.markdown(f"Overall: <span style='color:{compound_color}'>{compound:.2f}</span> ({compound_emotion})", unsafe_allow_html=True)
-                    
-                    # Create a chart for sentiment distribution
-                    st.bar_chart(sentiment_data)
-                else:
-                    # Handle simple sentiment format
-                    if isinstance(st.session_state.sentiment, str):
-                        sentiment = st.session_state.sentiment
-                        sentiment_color = "green" if "positive" in sentiment.lower() else "red" if "negative" in sentiment.lower() else "gray"
-                        st.markdown(f"<span style='color:{sentiment_color}'>{sentiment}</span>", unsafe_allow_html=True)
-                    else:
-                        st.write("Sentiment analysis not available")
-        except Exception as e:
-            st.error(f"Error displaying sentiment analysis: {str(e)}")
-            st.write("Sentiment analysis could not be displayed")
+        with col2:
+            st.write("**VADER Analysis:**")
+            vader = st.session_state.sentiment["vader"]
+            compound = vader["compound"]
+            
+            # Display sentiment distribution
+            st.write("Sentiment Distribution:")
+            
+            # Create a horizontal stacked bar
+            sentiment_data = {
+                "Positive": vader["pos"] * 100,
+                "Neutral": vader["neu"] * 100,
+                "Negative": vader["neg"] * 100
+            }
+            
+            # Display compound score with emotion
+            compound_color = "green" if compound > 0.05 else "red" if compound < -0.05 else "gray"
+            compound_emotion = "Positive 😊" if compound > 0.05 else "Negative ☹️" if compound < -0.05 else "Neutral 😐"
+            
+            st.markdown(f"Overall: <span style='color:{compound_color}'>{compound:.2f}</span> ({compound_emotion})", unsafe_allow_html=True)
+            
+            # Create a chart for sentiment distribution
+            st.bar_chart(sentiment_data)
 
         st.subheader("💡 Suggested Insights")
 
