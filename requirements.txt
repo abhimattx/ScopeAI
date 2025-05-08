@@ -1,0 +1,5 @@
+openai-whisper
+yt-dlp
+ffmpeg-python
+pydub
+python 3.10.0
