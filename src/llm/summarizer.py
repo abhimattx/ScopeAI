@@ -157,17 +157,30 @@ class TextSummarizer:
         return self._call_openai_api(messages)
 
 @st.cache_data
-def summarize_text(text, api_key=None, model="gpt-3.5-turbo"):
+def summarize_text(text, model="gpt-3.5-turbo"):
     """
     Simple function interface for text summarization.
     
     Args:
         text: Text to summarize
-        api_key: OpenAI API key
         model: Model to use for summarization
         
     Returns:
         Summarized text
     """
-    summarizer = TextSummarizer(api_key=api_key, model=model)
-    return summarizer.summarize(text)
+    # Try to get API key from different sources
+    api_key = os.getenv("OPENAI_API_KEY")
+    
+    # Try Streamlit secrets as a fallback
+    if not api_key and hasattr(st, 'secrets') and "OPENAI_API_KEY" in st.secrets:
+        api_key = st.secrets["OPENAI_API_KEY"]
+        
+    # If still no API key, return error message
+    if not api_key:
+        return "⚠️ ERROR: No OpenAI API key found. Please add your API key in the sidebar."
+    
+    try:
+        summarizer = TextSummarizer(api_key=api_key, model=model)
+        return summarizer.summarize(text)
+    except Exception as e:
+        return f"⚠️ Error generating summary: {str(e)}"

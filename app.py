@@ -84,12 +84,34 @@ if st.session_state.raw_text:
     if st.button("Generate Summary and Insights") or st.session_state.summary:
         # Only run analysis if not already in session state
         if not st.session_state.summary:
-            with st.spinner("Analyzing..."):
-                st.session_state.summary = summarize_text(st.session_state.raw_text)
-                analysis_result = analyze_text(st.session_state.raw_text)
-                st.session_state.entities = analysis_result["entities"]
-                st.session_state.sentiment = analysis_result["sentiment"]
-                st.session_state.insights = generate_insights(st.session_state.summary)
+            try:
+                with st.spinner("Generating summary..."):
+                    summary = summarize_text(st.session_state.raw_text)
+                    
+                    # Check if summary is an error message
+                    if summary.startswith("⚠️ ERROR"):
+                        st.error(summary)
+                        st.session_state.summary = "Could not generate summary due to API key issues."
+                    else:
+                        st.session_state.summary = summary
+                        
+                        # Only proceed with further analysis if summary was successful
+                        try:
+                            analysis_result = analyze_text(st.session_state.raw_text)
+                            st.session_state.entities = analysis_result["entities"]
+                            st.session_state.sentiment = analysis_result["sentiment"]
+                            st.session_state.insights = generate_insights(st.session_state.summary)
+                        except Exception as e:
+                            st.error(f"Error during analysis: {str(e)}")
+                            # Initialize with empty values to prevent errors
+                            st.session_state.entities = {}
+                            st.session_state.sentiment = {"textblob": {"polarity": 0, "subjectivity": 0}, 
+                                                         "vader": {"neg": 0, "neu": 1, "pos": 0, "compound": 0}}
+                            st.session_state.insights = {"follow_up_questions": ["What are the key points?"], "topics": []}
+                            
+            except Exception as e:
+                st.error(f"Error: {str(e)}")
+                st.session_state.summary = "Error generating summary. Please check your API key and try again."
 
         # Now display all results using session state variables
         st.subheader("📝 Summary")
