@@ -1,6 +1,5 @@
 #uncomment the below piece of code to run on the local machine
 
-'''
 import spacy
 
 from textblob import TextBlob
@@ -89,10 +88,11 @@ if __name__ == "__main__":
     # Example usage
     sample_text = "Apple is planning to open a new store in New York City next month. The CEO Tim Cook is very excited about this expansion."
     analysis = analyze_text(sample_text)
-    print(analysis)'''
+    print(analysis)
 
 
-import re
+
+'''import re
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 sentiment_analyzer = SentimentIntensityAnalyzer()
@@ -124,4 +124,4 @@ def analyze_text(text):
     return {
         "entities": unique_entities,
         "sentiment": sentiment
-    }
+    }'''

@@ -169,45 +169,72 @@ if st.session_state.raw_text:
 
         st.subheader("😊 Sentiment")
 
-        # Create columns for the two sentiment analyzers
-        col1, col2 = st.columns(2)
+        try:
+            # Create columns for the two sentiment analyzers
+            col1, col2 = st.columns(2)
 
-        with col1:
-            st.write("**TextBlob Analysis:**")
-            tb_polarity = st.session_state.sentiment["textblob"]["polarity"]
-            tb_subjectivity = st.session_state.sentiment["textblob"]["subjectivity"]
+            # Check if we have the expected nested structure
+            has_textblob = ("textblob" in st.session_state.sentiment and 
+                           isinstance(st.session_state.sentiment["textblob"], dict) and
+                           "polarity" in st.session_state.sentiment["textblob"])
             
-            # Display polarity with color and emotion
-            polarity_color = "green" if tb_polarity > 0 else "red" if tb_polarity < 0 else "gray"
-            polarity_emotion = "Positive 😊" if tb_polarity > 0.3 else "Negative ☹️" if tb_polarity < -0.3 else "Neutral 😐"
-            
-            st.markdown(f"Polarity: <span style='color:{polarity_color}'>{tb_polarity:.2f}</span> ({polarity_emotion})", unsafe_allow_html=True)
-            st.progress(tb_subjectivity)
-            st.write(f"Subjectivity: {tb_subjectivity:.2f} (Objective ↔️ Subjective)")
+            has_vader = ("vader" in st.session_state.sentiment and 
+                        isinstance(st.session_state.sentiment["vader"], dict) and
+                        "compound" in st.session_state.sentiment["vader"])
 
-        with col2:
-            st.write("**VADER Analysis:**")
-            vader = st.session_state.sentiment["vader"]
-            compound = vader["compound"]
-            
-            # Display sentiment distribution
-            st.write("Sentiment Distribution:")
-            
-            # Create a horizontal stacked bar
-            sentiment_data = {
-                "Positive": vader["pos"] * 100,
-                "Neutral": vader["neu"] * 100,
-                "Negative": vader["neg"] * 100
-            }
-            
-            # Display compound score with emotion
-            compound_color = "green" if compound > 0.05 else "red" if compound < -0.05 else "gray"
-            compound_emotion = "Positive 😊" if compound > 0.05 else "Negative ☹️" if compound < -0.05 else "Neutral 😐"
-            
-            st.markdown(f"Overall: <span style='color:{compound_color}'>{compound:.2f}</span> ({compound_emotion})", unsafe_allow_html=True)
-            
-            # Create a chart for sentiment distribution
-            st.bar_chart(sentiment_data)
+            # Display TextBlob sentiment if available
+            with col1:
+                st.write("**TextBlob Analysis:**")
+                if has_textblob:
+                    tb_polarity = st.session_state.sentiment["textblob"]["polarity"]
+                    tb_subjectivity = st.session_state.sentiment["textblob"]["subjectivity"]
+                    
+                    # Display polarity with color and emotion
+                    polarity_color = "green" if tb_polarity > 0 else "red" if tb_polarity < 0 else "gray"
+                    polarity_emotion = "Positive 😊" if tb_polarity > 0.3 else "Negative ☹️" if tb_polarity < -0.3 else "Neutral 😐"
+                    
+                    st.markdown(f"Polarity: <span style='color:{polarity_color}'>{tb_polarity:.2f}</span> ({polarity_emotion})", unsafe_allow_html=True)
+                    st.progress(tb_subjectivity)
+                    st.write(f"Subjectivity: {tb_subjectivity:.2f} (Objective ↔️ Subjective)")
+                else:
+                    st.write("Sentiment analysis not available")
+
+            # Display VADER sentiment if available
+            with col2:
+                st.write("**VADER Analysis:**")
+                if has_vader:
+                    vader = st.session_state.sentiment["vader"]
+                    compound = vader["compound"]
+                    
+                    # Display sentiment distribution
+                    st.write("Sentiment Distribution:")
+                    
+                    # Create a horizontal stacked bar
+                    sentiment_data = {
+                        "Positive": vader["pos"] * 100,
+                        "Neutral": vader["neu"] * 100,
+                        "Negative": vader["neg"] * 100
+                    }
+                    
+                    # Display compound score with emotion
+                    compound_color = "green" if compound > 0.05 else "red" if compound < -0.05 else "gray"
+                    compound_emotion = "Positive 😊" if compound > 0.05 else "Negative ☹️" if compound < -0.05 else "Neutral 😐"
+                    
+                    st.markdown(f"Overall: <span style='color:{compound_color}'>{compound:.2f}</span> ({compound_emotion})", unsafe_allow_html=True)
+                    
+                    # Create a chart for sentiment distribution
+                    st.bar_chart(sentiment_data)
+                else:
+                    # Handle simple sentiment format
+                    if isinstance(st.session_state.sentiment, str):
+                        sentiment = st.session_state.sentiment
+                        sentiment_color = "green" if "positive" in sentiment.lower() else "red" if "negative" in sentiment.lower() else "gray"
+                        st.markdown(f"<span style='color:{sentiment_color}'>{sentiment}</span>", unsafe_allow_html=True)
+                    else:
+                        st.write("Sentiment analysis not available")
+        except Exception as e:
+            st.error(f"Error displaying sentiment analysis: {str(e)}")
+            st.write("Sentiment analysis could not be displayed")
 
         st.subheader("💡 Suggested Insights")
 
