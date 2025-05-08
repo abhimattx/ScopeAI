@@ -1,9 +1,6 @@
 import os
 import streamlit as st  # Only if used in Streamlit context
 from openai import OpenAI  # Ensure you have the OpenAI library installed
-
-
-
 ...
 
 def __init__(self, api_key=None, model="gpt-3.5-turbo", max_tokens=4096, max_summary_tokens=1000):
