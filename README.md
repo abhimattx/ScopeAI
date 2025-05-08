@@ -9,7 +9,7 @@
 
 </div>
 
-ScopeAI is a multi-source AI insight engine that combines the power of OpenAI's GPT with real-world document and media parsing. With just a link or a file, ScopeAI extracts, summarizes, and interprets complex content — whether it's a PDF, YouTube video, or a live news article.
+ScopeAI is a multi-source AI insight engine that combines the power of OpenAI's GPT with real-world document and media parsing. With just a link or a file, ScopeAI extracts, summarizes, and interprets complex content, whether it's a PDF, YouTube video, or a live news article.
 
 > "Turn content chaos into clarity in seconds."
 

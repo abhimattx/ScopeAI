@@ -1,5 +1,13 @@
-openai-whisper
+streamlit
+openai
+python-dotenv
+PyMuPDF
+beautifulsoup4
+requests
 yt-dlp
+whisper
 ffmpeg-python
-pydub
-python 3.10.0
+spacy
+textblob
+pandas
+tqdm
