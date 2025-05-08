@@ -169,6 +169,22 @@ def summarize_text(text, api_key=None, model="gpt-3.5-turbo"):
     Returns:
         Summarized text
     """
-    summarizer = TextSummarizer(api_key=api_key, model=model)
-    return summarizer.summarize(text)
+    # Try to get API key from different sources
+    if not api_key:
+        # First try environment variables
+        api_key = os.getenv("OPENAI_API_KEY")
+        
+        # Then try Streamlit secrets
+        if not api_key and hasattr(st, 'secrets') and "OPENAI_API_KEY" in st.secrets:
+            api_key = st.secrets["OPENAI_API_KEY"]
+    
+    # If still no API key, return error message
+    if not api_key:
+        return "⚠️ ERROR: No OpenAI API key found. Please add your API key in the sidebar or in the Streamlit secrets."
+    
+    try:
+        summarizer = TextSummarizer(api_key=api_key, model=model)
+        return summarizer.summarize(text)
+    except Exception as e:
+        return f"⚠️ Error generating summary: {str(e)}"
 
