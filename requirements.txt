@@ -2,8 +2,6 @@ streamlit>=1.26.0
 python-dotenv>=0.19.0
 openai==1.0.0  # Use a specific version
 tenacity>=8.0.0
-spacy>=3.5.0
-https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.5.0/en_core_web_sm-3.5.0-py3-none-any.whl
 textblob>=0.15.3
 vaderSentiment>=3.3.2
 tiktoken>=0.5.0

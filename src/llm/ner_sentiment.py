@@ -1,38 +1,16 @@
-import spacy
 from textblob import TextBlob
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-import os
-import sys
-import subprocess
+import re
 
 """
 Named Entity Recognition and Sentiment Analysis module.
-Uses spaCy for NER and TextBlob/VADER for sentiment scoring.
+Uses TextBlob for basic NER and TextBlob/VADER for sentiment scoring.
 """
 
-# Load spaCy model with error handling
-try:
-    nlp = spacy.load("en_core_web_sm")
-except IOError:
-    # If model not found, try to install it
-    print("Downloading spaCy model...")
-    try:
-        # First try using pip directly
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "en-core-web-sm==3.5.0", "--no-deps"])
-        nlp = spacy.load("en_core_web_sm")
-    except:
-        # If that fails, try using spacy download command
-        try:
-            subprocess.check_call([sys.executable, "-m", "spacy", "download", "en_core_web_sm"])
-            nlp = spacy.load("en_core_web_sm")
-        except:
-            # Last resort: use a blank model
-            print("Could not load spaCy model. Using blank model instead.")
-            nlp = spacy.blank("en")
-
-def extract_entities(text):
+def extract_entities_with_textblob(text):
     """
-    Extract named entities from text using spaCy.
+    Extract named entities from text using TextBlob.
+    This is a fallback method when spaCy is not available.
     
     Args:
         text (str): Input text for entity extraction
@@ -40,16 +18,39 @@ def extract_entities(text):
     Returns:
         dict: Dictionary with entity types as keys and lists of entities as values
     """
-    doc = nlp(text)
-    entities = {}
+    blob = TextBlob(text)
+    entities = {
+        "PERSON": [],
+        "ORGANIZATION": [],
+        "LOCATION": [],
+        "DATE": [],
+        "OTHER": []
+    }
     
-    for ent in doc.ents:
-        if ent.label_ not in entities:
-            entities[ent.label_] = []
-        if ent.text not in entities[ent.label_]:
-            entities[ent.label_].append(ent.text)
-            
-    return entities
+    # Extract noun phrases as potential entities
+    for np in blob.noun_phrases:
+        # Capitalize each word in the noun phrase
+        entity = ' '.join(word.capitalize() for word in np.split())
+        
+        # Simple rules to categorize entities (not as accurate as spaCy but works as fallback)
+        if re.search(r'\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|January|February|March|April|June|July|August|September|October|November|December|\d{1,2}/\d{1,2}/\d{2,4}|\d{4})\b', entity, re.IGNORECASE):
+            if entity not in entities["DATE"]:
+                entities["DATE"].append(entity)
+        elif re.search(r'\b(Inc|Corp|LLC|Company|Organization|Ltd|Limited|Association)\b', entity, re.IGNORECASE):
+            if entity not in entities["ORGANIZATION"]:
+                entities["ORGANIZATION"].append(entity)
+        elif re.search(r'\b(Street|Avenue|Road|Boulevard|Lane|Drive|Place|Square|Park|City|Town|County|State|Country|River|Mountain|Ocean|Sea|Lake)\b', entity, re.IGNORECASE):
+            if entity not in entities["LOCATION"]:
+                entities["LOCATION"].append(entity)
+        elif re.search(r'^[A-Z][a-z]+ [A-Z][a-z]+$', entity):  # Simple pattern for full names
+            if entity not in entities["PERSON"]:
+                entities["PERSON"].append(entity)
+        else:
+            if entity not in entities["OTHER"]:
+                entities["OTHER"].append(entity)
+    
+    # Remove empty categories
+    return {k: v for k, v in entities.items() if v}
 
 def get_textblob_sentiment(text):
     """
@@ -92,7 +93,7 @@ def analyze_text(text):
         dict: Dictionary containing entities and sentiment scores
     """
     result = {
-        "entities": extract_entities(text),
+        "entities": extract_entities_with_textblob(text),
         "sentiment": {
             "textblob": get_textblob_sentiment(text),
             "vader": get_vader_sentiment(text)

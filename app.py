@@ -1,13 +1,19 @@
 import streamlit as st
 import os
 from dotenv import load_dotenv
-from src.parser.pdf_parser import extract_pdf_text
-from src.parser.youtube_parser import extract_youtube_transcript
-from src.parser.news_parser import extract_news_content
-from src.llm.summarizer import summarize_text
-from src.llm.ner_sentiment import analyze_text
-from src.llm.insight_gen import generate_insights
-from src.llm.answer_followup import answer_followup_question
+
+# Import with error handling
+try:
+    from src.parser.pdf_parser import extract_pdf_text
+    from src.parser.youtube_parser import extract_youtube_transcript
+    from src.parser.news_parser import extract_news_content
+    from src.llm.summarizer import summarize_text
+    from src.llm.ner_sentiment import analyze_text
+    from src.llm.insight_gen import generate_insights
+    from src.llm.answer_followup import answer_followup_question
+except ImportError as e:
+    st.error(f"Import error: {str(e)}")
+    st.stop()
 
 # Load environment variables from .env file
 load_dotenv()
