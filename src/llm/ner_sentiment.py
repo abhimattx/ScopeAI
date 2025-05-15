@@ -1,15 +1,34 @@
 import spacy
 from textblob import TextBlob
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+import os
+import sys
+import subprocess
 
 """
 Named Entity Recognition and Sentiment Analysis module.
 Uses spaCy for NER and TextBlob/VADER for sentiment scoring.
 """
 
-
-# Load spaCy model
-nlp = spacy.load("en_core_web_sm")
+# Load spaCy model with error handling
+try:
+    nlp = spacy.load("en_core_web_sm")
+except IOError:
+    # If model not found, try to install it
+    print("Downloading spaCy model...")
+    try:
+        # First try using pip directly
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "en-core-web-sm==3.5.0", "--no-deps"])
+        nlp = spacy.load("en_core_web_sm")
+    except:
+        # If that fails, try using spacy download command
+        try:
+            subprocess.check_call([sys.executable, "-m", "spacy", "download", "en_core_web_sm"])
+            nlp = spacy.load("en_core_web_sm")
+        except:
+            # Last resort: use a blank model
+            print("Could not load spaCy model. Using blank model instead.")
+            nlp = spacy.blank("en")
 
 def extract_entities(text):
     """

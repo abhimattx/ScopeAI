@@ -5,7 +5,9 @@ from setuptools import setup, find_packages
 def install_dependencies():
     """Install required dependencies on Streamlit Cloud during deployment"""
     subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
-    subprocess.check_call([sys.executable, "-m", "spacy", "download", "en_core_web_sm"])
+    
+    # Install spaCy model with pip instead of spacy CLI
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "en-core-web-sm==3.5.0", "--no-deps"])
 
 if __name__ == "__main__":
     install_dependencies()
